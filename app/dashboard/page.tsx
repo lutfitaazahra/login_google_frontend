@@ -9,14 +9,7 @@ interface GoogleUser {
   photos?: { value: string }[];
 }
 
-// =========================================================================
-// 🌐 KONFIGURASI ALAMAT BACKEND (OTOMATIS / DINAMIS)
-// =========================================================================
-const PUBLIC_BACKEND_URL = 'https://alamat-terowongan-kamu.localltunnel.me'; 
-
-const BACKEND_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-  ? 'http://localhost:5000'
-  : PUBLIC_BACKEND_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
 function DashboardContent() {
   const [user, setUser] = useState<GoogleUser | null>(null);
@@ -28,7 +21,6 @@ function DashboardContent() {
     fetch(`${BACKEND_URL}/auth/user`, { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => {
-        // Jika session di backend ternyata sudah habis, langsung tendang ke /login
         if (!data.loggedIn) {
           window.location.href = '/login';
           return;
@@ -58,7 +50,6 @@ function DashboardContent() {
     formData.append('myFile', file);
     try {
       setStatus({ type: 'loading', message: 'Sedang mengunggah berkas...' });
-      
       const response = await fetch(`${BACKEND_URL}/upload`, {
         method: 'POST',
         body: formData,
@@ -76,22 +67,16 @@ function DashboardContent() {
     }
   };
 
-  // 🚪 FUNGSI LOGOUT (SOLUSI TOTAL)
   const handleLogout = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      // 1. Panggil endpoint logout backend untuk menghapus session cookie di sana
       await fetch(`${BACKEND_URL}/logout`, { credentials: 'include', method: 'GET' });
     } catch (error) {
       console.error("Gagal menghubungi backend untuk logout:", error);
     } finally {
-      // 2. Bersihkan state data user di frontend
       setUser(null);
-      
-      // 3. PAKSA browser pindah secara fisik ke halaman login pink kamu (/login)
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   };
 

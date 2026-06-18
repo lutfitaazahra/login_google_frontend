@@ -22,7 +22,7 @@ function DashboardContent() {
       .then((res) => res.json())
       .then((data) => {
         if (!data.loggedIn) {
-          window.location.href = '/login';
+          window.location.href = '/';
           return;
         }
         if (data.user) setUser(data.user);
@@ -73,10 +73,13 @@ function DashboardContent() {
     try {
       await fetch(`${BACKEND_URL}/logout`, { credentials: 'include', method: 'GET' });
     } catch (error) {
-      console.error("Gagal menghubungi backend untuk logout:", error);
+      console.error("Gagal logout:", error);
     } finally {
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
       setUser(null);
-      window.location.href = '/';
+      window.location.replace('/');
     }
   };
 
@@ -89,7 +92,7 @@ function DashboardContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fff0f5] flex items-center justify-center">
-        <p className="text-pink-600 font-bold animate-pulse">Memproses Keluar...</p>
+        <p className="text-pink-600 font-bold animate-pulse">Memproses...</p>
       </div>
     );
   }

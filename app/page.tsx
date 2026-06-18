@@ -12,10 +12,8 @@ interface GoogleUser {
 // =========================================================================
 // 🌐 KONFIGURASI ALAMAT BACKEND (OTOMATIS / DINAMIS)
 // =========================================================================
-// GANTI teks di bawah ini dengan URL publik asli dari Localtunnel atau Render Anda:
 const PUBLIC_BACKEND_URL = 'https://alamat-terowongan-kamu.localltunnel.me'; 
 
-// Sistem otomatis mendeteksi lokasi server saat ini
 const BACKEND_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
   ? 'http://localhost:5000'
   : PUBLIC_BACKEND_URL;
@@ -27,7 +25,6 @@ function DashboardContent() {
   const [status, setStatus] = useState({ type: 'idle', message: '' });
 
   useEffect(() => {
-    // Menggunakan BACKEND_URL yang dinamis
     fetch(`${BACKEND_URL}/auth/user`, { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => {
@@ -55,7 +52,6 @@ function DashboardContent() {
     try {
       setStatus({ type: 'loading', message: 'Sedang mengunggah berkas...' });
       
-      // Menggunakan BACKEND_URL yang dinamis
       const response = await fetch(`${BACKEND_URL}/upload`, {
         method: 'POST',
         body: formData,
@@ -70,6 +66,20 @@ function DashboardContent() {
       }
     } catch {
       setStatus({ type: 'error', message: 'Gagal terhubung ke server backend.' });
+    }
+  };
+
+  // 🚪 FUNGSI LOGOUT LANGSUNG DI SISI FRONTEND (DIPERBAIKI)
+  const handleLogout = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault(); // Mencegah link pindah halaman otomatis ke backend
+    try {
+      // Panggil backend untuk menghapus session cookie
+      await fetch(`${BACKEND_URL}/logout`, { credentials: 'include' });
+    } catch (error) {
+      console.error("Gagal memanggil fungsi logout backend", error);
+    } finally {
+      // ✅ PAKSA REDIRECT KE ROOT URL FRONTEND (Halaman Login Pink)
+      window.location.href = '/';
     }
   };
 
@@ -165,8 +175,8 @@ function DashboardContent() {
           </div>
         </div>
         
-        {/* Tombol Logout Menggunakan BACKEND_URL Dinamis */}
-        <a href={`${BACKEND_URL}/logout`}
+        {/* ✅ TOMBOL LOGOUT SEKARANG DIKONTROL OLEH FUNGSI handleLogout */}
+        <a href="#" onClick={handleLogout}
           className="text-xs font-bold text-pink-400 hover:text-rose-500 transition-colors underline">
           Keluar dari Akun
         </a>

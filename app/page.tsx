@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
@@ -7,7 +7,7 @@ export default function LoginPage() {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #fce4ec 0%, #ffeef5 50%, #fce4ec 100%)" }}>
       <div style={{ background: "white", borderRadius: "24px", padding: "2.5rem 2rem", maxWidth: "400px", width: "100%", textAlign: "center", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
         <div style={{ display: "inline-block", background: "#fce4ec", borderRadius: "20px", padding: "4px 14px", marginBottom: "1rem" }}>
-          <span style={{ fontSize: "12px", color: "#c2185b", fontWeight: 500 }}>? SISTEM AUTENTIKASI</span>
+          <span style={{ fontSize: "12px", color: "#c2185b", fontWeight: 500 }}>✨ SISTEM AUTENTIKASI</span>
         </div>
         <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#1a1a2e", margin: "0 0 0.5rem" }}>Selamat Datang!</h1>
         <p style={{ fontSize: "14px", color: "#888", margin: "0 0 2rem" }}>Masuk untuk mengakses semua fitur unggah.</p>

@@ -1,198 +1,24 @@
-'use client';
+"use client";
 
-import { Suspense } from 'react';
-import { useEffect, useState } from 'react';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
-interface GoogleUser {
-  displayName?: string;
-  emails?: { value: string }[];
-  photos?: { value: string }[];
-}
-
-// =========================================================================
-// 🌐 KONFIGURASI ALAMAT BACKEND (OTOMATIS / DINAMIS)
-// =========================================================================
-const PUBLIC_BACKEND_URL = 'https://alamat-terowongan-kamu.localltunnel.me'; 
-
-const BACKEND_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-  ? 'http://localhost:5000'
-  : PUBLIC_BACKEND_URL;
-
-function DashboardContent() {
-  const [user, setUser] = useState<GoogleUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState({ type: 'idle', message: '' });
-
-  useEffect(() => {
-    fetch(`${BACKEND_URL}/auth/user`, { credentials: 'include' })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.loggedIn && data.user) setUser(data.user);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
-      setStatus({ type: 'idle', message: '' });
-    }
-  };
-
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) {
-      setStatus({ type: 'error', message: 'Silakan pilih file terlebih dahulu!' });
-      return;
-    }
-    const formData = new FormData();
-    formData.append('myFile', file);
-    try {
-      setStatus({ type: 'loading', message: 'Sedang mengunggah berkas...' });
-      
-      const response = await fetch(`${BACKEND_URL}/upload`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setStatus({ type: 'success', message: '🎉 Selesai! File berhasil disimpan.' });
-        setFile(null);
-      } else {
-        setStatus({ type: 'error', message: data.error || 'Gagal mengunggah file.' });
-      }
-    } catch {
-      setStatus({ type: 'error', message: 'Gagal terhubung ke server backend.' });
-    }
-  };
-
-  // 🚪 FUNGSI LOGOUT LANGSUNG DI SISI FRONTEND (DIPERBAIKI)
-  const handleLogout = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault(); // Mencegah link pindah halaman otomatis ke backend
-    try {
-      // Panggil backend untuk menghapus session cookie
-      await fetch(`${BACKEND_URL}/logout`, { credentials: 'include' });
-    } catch (error) {
-      console.error("Gagal memanggil fungsi logout backend", error);
-    } finally {
-      // ✅ PAKSA REDIRECT KE ROOT URL FRONTEND (Halaman Login Pink)
-      window.location.href = '/';
-    }
-  };
-
-  const userParam = {
-    name: user?.displayName || 'Pengguna Google',
-    email: user?.emails?.[0]?.value || 'user@gmail.com',
-    avatar: user?.photos?.[0]?.value || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100',
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#fff0f5] flex items-center justify-center">
-        <p className="text-pink-600 font-bold animate-pulse">Memuat halaman dashboard...</p>
-      </div>
-    );
-  }
-
+export default function LoginPage() {
   return (
-    <>
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes gradientShift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .animate-soft-pink {
-          background: linear-gradient(-45deg, #fff0f5, #ffe4e1, #fff5ee, #f3e5f5);
-          background-size: 400% 400%;
-          animation: gradientShift 15s ease infinite;
-        }
-      `}} />
-      <div className="min-h-screen animate-soft-pink font-sans flex flex-col items-center justify-center p-6 space-y-6">
-        <div className="w-full max-w-md bg-white/80 backdrop-blur-md border border-pink-100 rounded-3xl p-8 shadow-xl shadow-pink-100/30 space-y-6">
-          <div className="flex flex-col items-center text-center space-y-3">
-            <div className="relative mb-1">
-              <img src={userParam.avatar} alt="Google Avatar"
-                className="w-20 h-20 rounded-full border-4 border-pink-200 object-cover shadow-md"
-                referrerPolicy="no-referrer" />
-              <span className="absolute bottom-0 right-0 text-xl animate-bounce">👋</span>
-            </div>
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-rose-500 bg-rose-50/80 px-3 py-1.5 rounded-full border border-pink-100/60 shadow-sm animate-pulse">
-              ✨ Sistem Terautentikasi
-            </span>
-            <h1 className="text-2xl font-black tracking-tight bg-gradient-to-r bg-clip-text text-transparent from-slate-800 via-pink-700 to-rose-600">
-              Selamat Datang di Dashboard
-            </h1>
-            <div className="space-y-0.5">
-              <p className="text-base font-extrabold text-slate-800">{userParam.name}</p>
-              <p className="text-xs font-medium text-slate-400">{userParam.email}</p>
-            </div>
-            <p className="text-[11px] font-medium text-slate-500 max-w-xs leading-relaxed pt-1 border-t border-pink-100/40 w-full mt-2">
-              Anda berhasil masuk menggunakan akun <span className="font-bold text-pink-600 underline decoration-pink-300 decoration-wavy">Google</span>. Semua fitur unggah kini telah aktif sepenuhnya!
-            </p>
-          </div>
-          <div className="h-[1px] bg-gradient-to-r from-transparent via-pink-200 to-transparent" />
-          <div className="space-y-4">
-            <div className="text-center">
-              <h3 className="text-md font-bold text-pink-700">Upload Hub ✨</h3>
-              <p className="text-[11px] text-pink-400">Mendukung Gambar (JPG, PNG) & PDF (Maks 5MB)</p>
-            </div>
-            <form onSubmit={handleUpload} className="space-y-4">
-              <div className="relative border-2 border-dashed border-pink-200 hover:border-pink-400 rounded-2xl p-6 text-center bg-pink-50/20 hover:bg-pink-50/50 transition-all cursor-pointer">
-                <input type="file" onChange={handleFileChange} accept=".jpg,.jpeg,.png,.pdf"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                <div className="space-y-2 pointer-events-none">
-                  <span className="text-3xl block text-pink-400">☁️</span>
-                  <div className="text-xs font-bold text-slate-700">
-                    {file ? (
-                      <span className="text-pink-600 bg-pink-50 px-2 py-1 rounded-md block truncate max-w-[250px] mx-auto">
-                        📂 {file.name}
-                      </span>
-                    ) : (
-                      <span>Seret berkas ke sini atau <span className="text-pink-500 underline">Pilih File</span></span>
-                    )}
-                  </div>
-                  {!file && <p className="text-[10px] text-slate-400">Klik untuk menjelajahi komputer</p>}
-                </div>
-              </div>
-              <button type="submit" disabled={status.type === 'loading'}
-                className={`w-full py-3 px-4 rounded-2xl text-sm font-bold text-white shadow-md transition-all active:scale-[0.99]
-                  ${status.type === 'loading' ? 'bg-slate-300 shadow-none cursor-not-allowed' : 'bg-gradient-to-r from-pink-400 to-rose-400 hover:opacity-90 shadow-pink-200'}`}>
-                {status.type === 'loading' ? 'Mengunggah...' : 'Mulai Unggah ✨'}
-              </button>
-            </form>
-            {status.message && (
-              <div className={`p-3 rounded-2xl text-xs font-bold text-center border animate-pulse
-                ${status.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : ''}
-                ${status.type === 'error' ? 'bg-rose-50 border-rose-100 text-rose-700' : ''}
-                ${status.type === 'loading' ? 'bg-pink-50 border-pink-100 text-pink-700' : ''}`}>
-                {status.message}
-              </div>
-            )}
-          </div>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #fce4ec 0%, #ffeef5 50%, #fce4ec 100%)" }}>
+      <div style={{ background: "white", borderRadius: "24px", padding: "2.5rem 2rem", maxWidth: "400px", width: "100%", textAlign: "center", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
+        <div style={{ display: "inline-block", background: "#fce4ec", borderRadius: "20px", padding: "4px 14px", marginBottom: "1rem" }}>
+          <span style={{ fontSize: "12px", color: "#c2185b", fontWeight: 500 }}>? SISTEM AUTENTIKASI</span>
         </div>
-        
-        {/* ✅ TOMBOL LOGOUT SEKARANG DIKONTROL OLEH FUNGSI handleLogout */}
-        <a href="#" onClick={handleLogout}
-          className="text-xs font-bold text-pink-400 hover:text-rose-500 transition-colors underline">
-          Keluar dari Akun
+        <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#1a1a2e", margin: "0 0 0.5rem" }}>Selamat Datang!</h1>
+        <p style={{ fontSize: "14px", color: "#888", margin: "0 0 2rem" }}>Masuk untuk mengakses semua fitur unggah.</p>
+        <hr style={{ border: "none", borderTop: "1px solid #f0f0f0", marginBottom: "1.5rem" }} />
+        <p style={{ fontSize: "13px", color: "#888", marginBottom: "1rem" }}>Masuk menggunakan akun Google kamu</p>
+        <a href={BACKEND_URL + "/auth/google"} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", padding: "12px 20px", borderRadius: "12px", border: "1.5px solid #e0e0e0", background: "white", cursor: "pointer", fontSize: "15px", fontWeight: 500, color: "#333", textDecoration: "none" }}>
+          <svg width="20" height="20" viewBox="0 0 48 48"><path d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.9z" fill="#FFC107"/><path d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" fill="#FF3D00"/><path d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A12 12 0 0 1 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" fill="#4CAF50"/><path d="M43.6 20.1H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.7-.4-3.9z" fill="#1976D2"/></svg>
+          Sign in with Google
         </a>
+        <p style={{ fontSize: "12px", color: "#bbb", marginTop: "1.5rem" }}>Dengan masuk, kamu menyetujui <span style={{ color: "#e91e8c" }}>Syarat &amp; Ketentuan</span> kami.</p>
       </div>
-    </>
-  );
-}
-
-export default function DashboardPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#fff0f5] flex items-center justify-center">
-        <p className="text-pink-600 font-bold animate-pulse">Memuat...</p>
-      </div>
-    }>
-      <DashboardContent />
-    </Suspense>
+    </div>
   );
 }
